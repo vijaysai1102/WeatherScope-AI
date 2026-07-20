@@ -1,0 +1,28 @@
+{
+  "comparison_months": [
+    "5",
+    "6",
+    "7"
+  ],
+  "yearly_mean_temperature": {
+    "2024": 26.14,
+    "2025": 24.52,
+    "2026": 22.57
+  },
+  "yearly_mean_precip_mm": {
+    "2024": 0.1531,
+    "2025": 0.1393,
+    "2026": 0.1105
+  },
+  "largest_warm_anomaly": {
+    "date": "2025-04-22",
+    "value": 2.62
+  },
+  "largest_cold_anomaly": {
+    "date": "2025-10-03",
+    "value": -2.68
+  },
+  "stl_trend_slope_c_per_year": -1.891,
+  "stl_trend_p_value": 0.0,
+  "note": "Trend estimated over ~26 months of data; it reflects the observation window (including possible changes in station composition over time), not multi-decadal climate change."
+}
