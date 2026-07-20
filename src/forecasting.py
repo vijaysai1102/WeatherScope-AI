@@ -358,7 +358,10 @@ def plot_predictions(predictions: pd.DataFrame, target: str) -> None:
         ax.set_title(name)
         ax.tick_params(axis="x", rotation=30)
     axes[0, 0].legend(loc="upper left")
-    fig.suptitle(f"Actual vs predicted — {target} (60-day holdout)", fontsize=15)
+    test_days = load_config()["forecasting"]["test_days"]
+    fig.suptitle(
+        f"Actual vs predicted — {target} ({test_days}-day holdout)", fontsize=15
+    )
     fig.tight_layout()
     save_figure(fig, f"forecast_{target}")
     plt.close(fig)
