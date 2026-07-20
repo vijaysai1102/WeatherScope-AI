@@ -14,8 +14,10 @@ data/raw/*.csv
 data/processed/*.parquet
 data/processed/*.csv
 
-# Logs
+# Logs and Outputs
 outputs/pipeline.log
+outputs/models/*.joblib
+outputs/models/*.pkl
 
 # OS / editor
 .DS_Store
