@@ -1,0 +1,69 @@
+{
+  "epa_category_share_pct": {
+    "Good": 55.38,
+    "Moderate": 30.43,
+    "Unhealthy (sensitive)": 7.71,
+    "Unhealthy": 5.39,
+    "Very unhealthy": 0.79,
+    "Hazardous": 0.29
+  },
+  "pollutant_weather_correlations": {
+    "temperature_celsius": {
+      "CO (\u00b5g/m\u00b3)": -0.004,
+      "O\u2083 (\u00b5g/m\u00b3)": 0.254,
+      "NO\u2082 (\u00b5g/m\u00b3)": -0.135,
+      "SO\u2082 (\u00b5g/m\u00b3)": -0.032,
+      "PM2.5 (\u00b5g/m\u00b3)": 0.064,
+      "PM10 (\u00b5g/m\u00b3)": 0.114
+    },
+    "humidity": {
+      "CO (\u00b5g/m\u00b3)": -0.076,
+      "O\u2083 (\u00b5g/m\u00b3)": -0.405,
+      "NO\u2082 (\u00b5g/m\u00b3)": -0.108,
+      "SO\u2082 (\u00b5g/m\u00b3)": -0.116,
+      "PM2.5 (\u00b5g/m\u00b3)": -0.221,
+      "PM10 (\u00b5g/m\u00b3)": -0.243
+    },
+    "wind_kph": {
+      "CO (\u00b5g/m\u00b3)": -0.135,
+      "O\u2083 (\u00b5g/m\u00b3)": 0.161,
+      "NO\u2082 (\u00b5g/m\u00b3)": -0.162,
+      "SO\u2082 (\u00b5g/m\u00b3)": -0.064,
+      "PM2.5 (\u00b5g/m\u00b3)": -0.046,
+      "PM10 (\u00b5g/m\u00b3)": 0.083
+    },
+    "precip_mm": {
+      "CO (\u00b5g/m\u00b3)": 0.014,
+      "O\u2083 (\u00b5g/m\u00b3)": -0.071,
+      "NO\u2082 (\u00b5g/m\u00b3)": -0.033,
+      "SO\u2082 (\u00b5g/m\u00b3)": -0.026,
+      "PM2.5 (\u00b5g/m\u00b3)": -0.061,
+      "PM10 (\u00b5g/m\u00b3)": -0.051
+    },
+    "pressure_mb": {
+      "CO (\u00b5g/m\u00b3)": 0.018,
+      "O\u2083 (\u00b5g/m\u00b3)": -0.156,
+      "NO\u2082 (\u00b5g/m\u00b3)": 0.08,
+      "SO\u2082 (\u00b5g/m\u00b3)": 0.036,
+      "PM2.5 (\u00b5g/m\u00b3)": 0.003,
+      "PM10 (\u00b5g/m\u00b3)": -0.036
+    }
+  },
+  "most_polluted_cities_pm25": {
+    "Santiago": 141.3,
+    "Jakarta": 136.5,
+    "Riyadh": 135.1,
+    "Beijing": 123.2,
+    "New Delhi": 109.2,
+    "Kuwait City": 91.4,
+    "Hanoi": 72.9,
+    "Nouakchott": 67.0,
+    "Dhaka": 66.3,
+    "Manama": 64.1,
+    "Kuala Lumpur": 57.0,
+    "Doha": 56.6,
+    "Abu Dhabi": 56.4,
+    "Tehran": 52.7,
+    "Islamabad": 49.9
+  }
+}
