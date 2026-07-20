@@ -1,0 +1,8 @@
+{
+  "n_samples": 30000,
+  "isolation_forest_flagged": 300,
+  "dbscan_flagged": 241,
+  "flagged_by_both": 152,
+  "flagged_by_either": 389,
+  "jaccard_agreement": 0.3907
+}
