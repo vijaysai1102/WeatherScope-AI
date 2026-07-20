@@ -1,0 +1,36 @@
+# Core
+pandas>=2.2
+numpy>=1.26,<3
+scipy>=1.13
+
+# Visualization
+matplotlib>=3.8
+seaborn>=0.13
+plotly>=5.22
+folium>=0.16
+
+# Machine Learning
+scikit-learn>=1.4
+xgboost>=2.0
+lightgbm>=4.3
+catboost>=1.2.7
+
+# Time Series
+prophet>=1.1.5
+statsmodels>=0.14
+
+# Geospatial
+geopandas>=0.14
+geopy>=2.4
+
+# Explainability
+shap>=0.45
+
+# Utilities
+joblib>=1.4
+tqdm>=4.66
+pyyaml>=6.0
+pyarrow>=15.0
+
+# Dashboard
+streamlit>=1.35

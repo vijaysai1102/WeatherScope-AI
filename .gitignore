@@ -1,0 +1,24 @@
+# Environments
+.venv/
+env/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Data (large files; see README for download instructions)
+data/raw/*.csv
+data/processed/*.parquet
+data/processed/*.csv
+
+# Logs
+outputs/pipeline.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

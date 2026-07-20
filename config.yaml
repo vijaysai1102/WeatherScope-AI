@@ -1,0 +1,105 @@
+# =============================================================
+# WeatherScope AI - Weather Trend Forecasting
+# Central configuration for the entire pipeline.
+# =============================================================
+
+project:
+  name: weather-trend-forecasting
+  random_seed: 42
+
+paths:
+  raw_data: data/raw/GlobalWeatherRepository.csv
+  processed_data: data/processed/weather_clean.parquet
+  scaled_data: data/processed/weather_scaled.parquet
+  features_data: data/processed/weather_features.parquet
+  figures_dir: outputs/figures
+  models_dir: outputs/models
+  reports_dir: outputs/reports
+  log_file: outputs/pipeline.log
+
+cleaning:
+  # Physically plausible ranges; rows outside are treated as invalid.
+  valid_ranges:
+    latitude: [-90.0, 90.0]
+    longitude: [-180.0, 180.0]
+    temperature_celsius: [-90.0, 60.0]
+    humidity: [0.0, 100.0]
+    precip_mm: [0.0, 500.0]
+    pressure_mb: [850.0, 1090.0]
+    wind_kph: [0.0, 410.0]
+    cloud: [0.0, 100.0]
+    uv_index: [0.0, 17.0]
+    visibility_km: [0.0, 100.0]
+  iqr_multiplier: 3.0
+  isolation_forest:
+    contamination: 0.01
+    n_estimators: 200
+
+features:
+  lag_days: [1, 2, 3, 7, 14]
+  rolling_windows: [3, 7, 14, 30]
+  wind_speed_bins_kph: [0, 12, 29, 50, 75, 1000]
+  wind_speed_labels: ["Calm", "Light", "Moderate", "Strong", "Storm"]
+
+anomaly_detection:
+  features:
+    - temperature_celsius
+    - humidity
+    - pressure_mb
+    - wind_kph
+    - precip_mm
+    - uv_index
+  isolation_forest:
+    contamination: 0.01
+    n_estimators: 200
+  dbscan:
+    eps: 1.2
+    min_samples: 10
+    max_samples: 30000
+
+forecasting:
+  targets:
+    - temperature_celsius
+    - humidity
+    - precip_mm
+  test_days: 60
+  horizon_days: 30
+  arima_order: [2, 1, 2]
+  sarima_order: [1, 1, 1]
+  sarima_seasonal_order: [1, 1, 1, 7]
+  ml_lag_days: [1, 2, 3, 7, 14, 21, 28]
+  ml_rolling_windows: [3, 7, 14, 30]
+
+ensemble:
+  top_n_models: 3
+  stacking_meta_model: ridge
+
+feature_importance:
+  target: temperature_celsius
+  shap_sample_size: 5000
+  top_n: 20
+
+climate:
+  baseline_period_months: 12
+  stl_period: 365
+
+spatial:
+  cluster_count: 5
+  map_sample_size: 5000
+  world_geojson_url: "https://raw.githubusercontent.com/python-visualization/folium/main/examples/data/world-countries.json"
+  world_geojson_path: data/raw/world-countries.json
+
+air_quality:
+  pollutants:
+    - air_quality_Carbon_Monoxide
+    - air_quality_Ozone
+    - air_quality_Nitrogen_dioxide
+    - air_quality_Sulphur_dioxide
+    - air_quality_PM2.5
+    - air_quality_PM10
+  weather_vars:
+    - temperature_celsius
+    - humidity
+    - wind_kph
+    - precip_mm
+    - pressure_mb
