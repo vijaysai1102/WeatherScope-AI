@@ -138,7 +138,10 @@ def cap_outliers_iqr(df: pd.DataFrame, report: dict[str, Any]) -> pd.DataFrame:
 
     A conservative multiplier (default 3.0) is used so genuine weather
     extremes survive while data glitches are pulled back to the fence.
-    Bounded physical quantities keep their hard limits.
+    Fences are additionally floored at the 0.1th / 99.9th percentiles:
+    weather variables are heavy-tailed and zero-inflated (precipitation,
+    gusts), so a plain IQR fence would erase genuine extremes such as
+    heavy rainfall. Bounded physical quantities keep their hard limits.
     """
     config = load_config()["cleaning"]
     multiplier = float(config["iqr_multiplier"])
@@ -148,7 +151,13 @@ def cap_outliers_iqr(df: pd.DataFrame, report: dict[str, Any]) -> pd.DataFrame:
         series = df[column]
         q1, q3 = series.quantile([0.25, 0.75])
         iqr = q3 - q1
-        lower, upper = q1 - multiplier * iqr, q3 + multiplier * iqr
+        if iqr <= 0:
+            # Degenerate distribution (e.g. precip is mostly 0): fences would
+            # collapse onto the median and erase genuine extremes. Skip.
+            capped_counts[column] = 0
+            continue
+        lower = min(q1 - multiplier * iqr, series.quantile(0.001))
+        upper = max(q3 + multiplier * iqr, series.quantile(0.999))
         hard = config["valid_ranges"].get(column)
         if hard is not None:
             lower, upper = max(lower, hard[0]), min(upper, hard[1])

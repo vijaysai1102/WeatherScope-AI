@@ -1,0 +1,37 @@
+{
+  "raw_shape": [
+    154166,
+    41
+  ],
+  "duplicates_removed": 1,
+  "range_violations_by_column": {
+    "latitude": 0,
+    "longitude": 0,
+    "temperature_celsius": 1,
+    "humidity": 0,
+    "precip_mm": 0,
+    "pressure_mb": 2,
+    "wind_kph": 1,
+    "cloud": 0,
+    "uv_index": 0,
+    "visibility_km": 0
+  },
+  "rows_dropped_invalid_ranges": 4,
+  "rows_dropped_missing_keys": 0,
+  "missing_values_imputed": 0,
+  "iqr_values_capped_by_column": {
+    "temperature_celsius": 135,
+    "humidity": 0,
+    "pressure_mb": 204,
+    "wind_kph": 131,
+    "precip_mm": 155,
+    "cloud": 0,
+    "uv_index": 0,
+    "visibility_km": 0
+  },
+  "isolation_forest_flagged": 1542,
+  "clean_shape": [
+    154161,
+    34
+  ]
+}
