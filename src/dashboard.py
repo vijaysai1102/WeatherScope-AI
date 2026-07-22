@@ -20,7 +20,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from streamlit.components.v1 import html as st_html
+
 
 from src.utils import (
     CATEGORICAL_PALETTE,
@@ -170,7 +170,7 @@ def page_overview(df: pd.DataFrame, filters: dict[str, Any]) -> None:
         labels={"value": "Observations", "condition_text": "Condition"},
     )
     fig.update_layout(showlegend=False, template="plotly_white", height=420)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def page_eda(df: pd.DataFrame, filters: dict[str, Any]) -> None:
@@ -187,7 +187,7 @@ def page_eda(df: pd.DataFrame, filters: dict[str, Any]) -> None:
             title="Distribution",
         )
         fig.update_layout(template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     with right:
         daily = (
             df.set_index("last_updated")[variable].resample("D").mean().dropna()
@@ -198,7 +198,7 @@ def page_eda(df: pd.DataFrame, filters: dict[str, Any]) -> None:
             labels={"value": variable, "last_updated": "Date"},
         )
         fig.update_layout(template="plotly_white", height=380, showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     st.subheader("Monthly temperature by continent")
     major = df[df["continent"].isin(["Asia", "Africa", "Europe", "Americas", "Oceania"])]
@@ -212,7 +212,7 @@ def page_eda(df: pd.DataFrame, filters: dict[str, Any]) -> None:
         labels={"last_updated": "Month", "temp": "Temperature (°C)"},
     )
     fig.update_layout(template="plotly_white", xaxis={"dtick": 1}, height=420)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def _plot_future(future: pd.DataFrame, daily: pd.Series, horizon: int, label: str) -> go.Figure:
@@ -257,7 +257,7 @@ def page_forecasting(df: pd.DataFrame, filters: dict[str, Any]) -> None:
     st.subheader(f"{filters['horizon']}-day outlook (Prophet, 95% CI)")
     st.plotly_chart(
         _plot_future(load_future(target), daily, filters["horizon"], label),
-        use_container_width=True,
+        width="stretch",
     )
 
     st.subheader("Holdout window: actual vs one-step-ahead predictions")
@@ -280,7 +280,7 @@ def page_forecasting(df: pd.DataFrame, filters: dict[str, Any]) -> None:
                        name=model, line={"color": color, "width": 1.8, "dash": "dot"})
         )
     fig.update_layout(template="plotly_white", height=430, yaxis_title=label)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     metrics = load_report_json("forecast_metrics")[target]
     table = pd.DataFrame(metrics).T.sort_values("RMSE").round(3)
@@ -289,29 +289,161 @@ def page_forecasting(df: pd.DataFrame, filters: dict[str, Any]) -> None:
 
 
 def page_maps(df: pd.DataFrame, filters: dict[str, Any]) -> None:
-    """Embedded interactive Folium maps."""
+    """Embedded interactive Folium maps — generated on-the-fly from data."""
+    import folium
+    from branca.colormap import LinearColormap
+    from folium.plugins import HeatMap
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
+    from streamlit_folium import st_folium
+
     st.title("Interactive Maps")
-    maps = {
-        "Temperature map": "temperature_map.html",
-        "Temperature heatmap": "heatmap_temperature.html",
-        "Rainfall heatmap": "heatmap_rainfall.html",
-        "Country choropleth (temperature)": "choropleth_temperature.html",
-        "Air quality (PM2.5)": "air_quality_map.html",
-        "Weather clusters": "weather_clusters_map.html",
-    }
-    choice = st.selectbox("Map", list(maps))
-    path = figures_dir() / "maps" / maps[choice]
-    if path.exists():
-        st_html(path.read_text(encoding="utf-8"), height=560)
-    else:
-        st.warning("Run `python main.py --stage spatial` to generate maps.")
-    if choice == "Weather clusters":
-        profiles = resolve_path(
-            load_config()["paths"]["reports_dir"]
-        ) / "weather_cluster_profiles.csv"
-        if profiles.exists():
-            st.subheader("Cluster profiles (city-level means)")
-            st.dataframe(pd.read_csv(profiles), use_container_width=True)
+
+    # ------------------------------------------------------------------
+    # Build per-location summary from the (filtered) clean data
+    # ------------------------------------------------------------------
+    subset = apply_filters(df, filters)
+    locations = (
+        subset.groupby("location_name")
+        .agg(
+            country=("country", "first"),
+            latitude=("latitude", "median"),
+            longitude=("longitude", "median"),
+            temperature=("temperature_celsius", "mean"),
+            humidity=("humidity", "mean"),
+            precip=("precip_mm", "mean"),
+            wind=("wind_kph", "mean"),
+            pm25=("air_quality_PM2.5", "mean"),
+            observations=("location_name", "size"),
+        )
+        .query("observations >= 10")
+        .reset_index()
+    )
+
+    MAP_CHOICES = [
+        "Temperature map",
+        "Temperature heatmap",
+        "Rainfall heatmap",
+        "Country choropleth (temperature)",
+        "Air quality (PM2.5)",
+        "Weather clusters",
+    ]
+    choice = st.selectbox("Map", MAP_CHOICES)
+
+    def _base() -> folium.Map:
+        return folium.Map(location=[20, 0], zoom_start=2, tiles="cartodbpositron")
+
+    # ------------------------------------------------------------------
+    if choice == "Temperature map":
+        cmap = LinearColormap(
+            ["#440154", "#31688e", "#35b779", "#fde725"],
+            vmin=float(locations["temperature"].min()),
+            vmax=float(locations["temperature"].max()),
+            caption="Mean temperature (°C)",
+        )
+        m = _base()
+        for _, r in locations.iterrows():
+            folium.CircleMarker(
+                location=[r["latitude"], r["longitude"]],
+                radius=5, color=None, fill=True,
+                fill_color=cmap(r["temperature"]), fill_opacity=0.85,
+                tooltip=f"{r['location_name']} ({r['country']}): {r['temperature']:.1f} °C",
+            ).add_to(m)
+        cmap.add_to(m)
+        st_folium(m, width=700, height=500, returned_objects=[])
+
+    # ------------------------------------------------------------------
+    elif choice == "Temperature heatmap":
+        m = _base()
+        vals = locations["temperature"] - locations["temperature"].min()
+        peak = vals.max() or 1.0
+        HeatMap(
+            list(zip(locations["latitude"], locations["longitude"],
+                     (vals / peak).tolist())),
+            radius=18, blur=22,
+        ).add_to(m)
+        st_folium(m, width=700, height=500, returned_objects=[])
+
+    # ------------------------------------------------------------------
+    elif choice == "Rainfall heatmap":
+        m = _base()
+        vals = locations["precip"] - locations["precip"].min()
+        peak = vals.max() or 1.0
+        HeatMap(
+            list(zip(locations["latitude"], locations["longitude"],
+                     (vals / peak).tolist())),
+            radius=18, blur=22,
+        ).add_to(m)
+        st_folium(m, width=700, height=500, returned_objects=[])
+
+    # ------------------------------------------------------------------
+    elif choice == "Country choropleth (temperature)":
+        countries = (
+            subset.groupby("country")
+            .agg(temperature=("temperature_celsius", "mean"))
+            .reset_index()
+        )
+        fig = px.choropleth(
+            countries, locations="country", locationmode="country names",
+            color="temperature", color_continuous_scale="YlOrRd",
+            labels={"temperature": "Mean temp (°C)"},
+            title="Mean temperature by country",
+        )
+        fig.update_layout(template="plotly_white", height=500)
+        st.plotly_chart(fig, width="stretch")
+
+    # ------------------------------------------------------------------
+    elif choice == "Air quality (PM2.5)":
+        cmap = LinearColormap(
+            ["#029e73", "#ece133", "#d55e00", "#5d1a78"],
+            vmin=0.0,
+            vmax=float(locations["pm25"].quantile(0.95)),
+            caption="Mean PM2.5 (µg/m³)",
+        )
+        m = _base()
+        for _, r in locations.iterrows():
+            folium.CircleMarker(
+                location=[r["latitude"], r["longitude"]],
+                radius=5, color=None, fill=True,
+                fill_color=cmap(min(r["pm25"], cmap.vmax)),
+                fill_opacity=0.85,
+                tooltip=f"{r['location_name']} ({r['country']}): PM2.5 {r['pm25']:.0f}",
+            ).add_to(m)
+        cmap.add_to(m)
+        st_folium(m, width=700, height=500, returned_objects=[])
+
+    # ------------------------------------------------------------------
+    elif choice == "Weather clusters":
+        k = 5
+        features = locations[["temperature", "humidity", "precip", "wind", "pm25"]]
+        matrix = StandardScaler().fit_transform(features.fillna(features.mean()))
+        km = KMeans(n_clusters=k, n_init=10, random_state=42)
+        locations = locations.copy()
+        locations["cluster"] = km.fit_predict(matrix)
+        order = locations.groupby("cluster")["temperature"].mean().sort_values().index
+        rank_of = {c: r for r, c in enumerate(order)}
+        locations["cluster"] = locations["cluster"].map(rank_of)
+
+        palette = CATEGORICAL_PALETTE
+        m = _base()
+        for _, r in locations.iterrows():
+            folium.CircleMarker(
+                location=[r["latitude"], r["longitude"]],
+                radius=5, color=None, fill=True,
+                fill_color=palette[int(r["cluster"]) % len(palette)],
+                fill_opacity=0.9,
+                tooltip=f"{r['location_name']}: cluster {int(r['cluster'])}",
+            ).add_to(m)
+        st_folium(m, width=700, height=500, returned_objects=[])
+
+        # Show cluster profiles
+        profile = (
+            locations.groupby("cluster")[
+                ["temperature", "humidity", "precip", "wind", "pm25"]
+            ].mean().round(2)
+        )
+        st.subheader("Cluster profiles (city-level means)")
+        st.dataframe(profile, use_container_width=True)
 
 
 def page_importance(df: pd.DataFrame, filters: dict[str, Any]) -> None:
@@ -334,7 +466,7 @@ def page_importance(df: pd.DataFrame, filters: dict[str, Any]) -> None:
         with tab:
             path = figures_dir() / filename
             if path.exists():
-                st.image(str(path), use_container_width=True)
+                st.image(str(path), width="stretch")
             else:
                 st.warning("Run `python main.py --stage importance` first.")
 
@@ -364,7 +496,7 @@ def page_climate(df: pd.DataFrame, filters: dict[str, Any]) -> None:
     ]:
         path = figures_dir() / filename
         if path.exists():
-            st.image(str(path), use_container_width=True)
+            st.image(str(path), width="stretch")
 
 
 def page_air_quality(df: pd.DataFrame, filters: dict[str, Any]) -> None:
@@ -391,7 +523,7 @@ def page_air_quality(df: pd.DataFrame, filters: dict[str, Any]) -> None:
                 color_discrete_sequence=[PRIMARY],
             )
             fig.update_layout(template="plotly_white", height=380)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
     with right:
         st.subheader("Most polluted cities (filtered)")
         ranked = (
@@ -403,12 +535,12 @@ def page_air_quality(df: pd.DataFrame, filters: dict[str, Any]) -> None:
             labels={"value": "Mean PM2.5", "location_name": "City"},
         )
         fig.update_layout(showlegend=False, template="plotly_white", height=380)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     st.image(
         str(figures_dir() / "air_weather_correlations.png"),
         caption="Pollutant vs weather correlations (full dataset)",
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -447,7 +579,7 @@ def page_model_comparison(df: pd.DataFrame, filters: dict[str, Any]) -> None:
         labels={"value": "RMSE", "index": "Model"},
     )
     fig.update_layout(showlegend=False, template="plotly_white", height=380)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
     st.caption(
         "Statistical models excel because the globally averaged daily series "
         "is dominated by smooth seasonal structure and strong day-to-day "
