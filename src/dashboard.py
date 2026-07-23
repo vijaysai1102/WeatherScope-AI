@@ -343,11 +343,13 @@ def page_maps(df: pd.DataFrame, filters: dict[str, Any]) -> None:
         )
         m = _base()
         for _, r in locations.iterrows():
+            loc_name = str(r['location_name']).replace('`', "'")
+            country_name = str(r['country']).replace('`', "'")
             folium.CircleMarker(
                 location=[r["latitude"], r["longitude"]],
-                radius=5, color=None, fill=True,
+                radius=5, stroke=False, fill=True,
                 fill_color=cmap(r["temperature"]), fill_opacity=0.85,
-                tooltip=f"{r['location_name']} ({r['country']}): {r['temperature']:.1f} °C",
+                tooltip=f"{loc_name} ({country_name}): {r['temperature']:.1f} °C",
             ).add_to(m)
         cmap.add_to(m)
         st_folium(m, width=700, height=500, returned_objects=[])
@@ -402,12 +404,14 @@ def page_maps(df: pd.DataFrame, filters: dict[str, Any]) -> None:
         )
         m = _base()
         for _, r in locations.iterrows():
+            loc_name = str(r['location_name']).replace('`', "'")
+            country_name = str(r['country']).replace('`', "'")
             folium.CircleMarker(
                 location=[r["latitude"], r["longitude"]],
-                radius=5, color=None, fill=True,
+                radius=5, stroke=False, fill=True,
                 fill_color=cmap(min(r["pm25"], cmap.vmax)),
                 fill_opacity=0.85,
-                tooltip=f"{r['location_name']} ({r['country']}): PM2.5 {r['pm25']:.0f}",
+                tooltip=f"{loc_name} ({country_name}): PM2.5 {r['pm25']:.0f}",
             ).add_to(m)
         cmap.add_to(m)
         st_folium(m, width=700, height=500, returned_objects=[])
@@ -427,12 +431,13 @@ def page_maps(df: pd.DataFrame, filters: dict[str, Any]) -> None:
         palette = CATEGORICAL_PALETTE
         m = _base()
         for _, r in locations.iterrows():
+            loc_name = str(r['location_name']).replace('`', "'")
             folium.CircleMarker(
                 location=[r["latitude"], r["longitude"]],
-                radius=5, color=None, fill=True,
+                radius=5, stroke=False, fill=True,
                 fill_color=palette[int(r["cluster"]) % len(palette)],
                 fill_opacity=0.9,
-                tooltip=f"{r['location_name']}: cluster {int(r['cluster'])}",
+                tooltip=f"{loc_name}: cluster {int(r['cluster'])}",
             ).add_to(m)
         st_folium(m, width=700, height=500, returned_objects=[])
 
