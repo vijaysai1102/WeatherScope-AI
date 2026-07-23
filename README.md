@@ -156,7 +156,7 @@ city, date range and forecast horizon.
 ## 🎬 Demo
 
 The dashboard is the demo: launch it and walk Overview → Forecasting →
-Maps in under two minutes. *(Demo video link: to be added.)*
+Maps in under two minutes. *(Demo video link: https://drive.google.com/file/d/12CFxI7Ri9A7iqxBBwqkXcD2S9pc6Es6K/view?usp=sharing)*
 
 ## 🔮 Future Improvements
 
